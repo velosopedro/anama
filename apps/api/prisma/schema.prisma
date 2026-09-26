@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  idUsuario Int    @id @default(autoincrement()) @map("id_usuario")
+  nome      String @db.VarChar(100)
+  email     String @unique @db.VarChar(150)
+  senhaHash String @map("senha_hash") @db.VarChar(255)
+  tipo      String @db.VarChar(20)
+  status    String @default("ATIVO") @db.VarChar(20)
+
+  familia      Familia?
+  ong          Ong?
+  doacoes      Doacao[]
+  notificacoes Notificacao[]
+
+  @@map("usuario")
+}
+
+model Familia {
+  idFamilia         Int    @id @default(autoincrement()) @map("id_familia")
+  idUsuario         Int    @unique @map("id_usuario")
+  codigoPublico     String @unique @map("codigo_publico") @db.Uuid
+  numeroIntegrantes Int    @map("numero_integrantes")
+  status            String @default("ATIVA") @db.VarChar(20)
+
+  usuario  Usuario          @relation(fields: [idUsuario], references: [idUsuario])
+  endereco EnderecoFamilia?
+  cestas   Cesta[]
+
+  @@map("familia")
+}
+
+model Ong {
+  idOng             Int    @id @default(autoincrement()) @map("id_ong")
+  idUsuario         Int    @unique @map("id_usuario")
+  cnpj              String @unique @db.VarChar(18)
+  nomeFantasia      String @map("nome_fantasia") @db.VarChar(120)
+  statusVerificacao String @default("PENDENTE") @map("status_verificacao") @db.VarChar(20)
+
+  usuario  Usuario      @relation(fields: [idUsuario], references: [idUsuario])
+  estoques EstoqueOng[]
+  entregas Entrega[]
+
+  @@map("ong")
+}
+
+model EnderecoFamilia {
+  idEndereco        Int      @id @default(autoincrement()) @map("id_endereco")
+  idFamilia         Int      @unique @map("id_familia")
+  enderecoProtegido String   @map("endereco_protegido") @db.Text
+  latitude          Decimal? @db.Decimal(9, 6)
+  longitude         Decimal? @db.Decimal(9, 6)
+
+  familia Familia @relation(fields: [idFamilia], references: [idFamilia])
+
+  @@map("endereco_familia")
+}
+
+model Cesta {
+  idCesta       Int      @id @default(autoincrement()) @map("id_cesta")
+  idFamilia     Int      @map("id_familia")
+  status        String   @default("EM_MONTAGEM") @db.VarChar(20)
+  valorEstimado Decimal  @map("valor_estimado") @db.Decimal(10, 2)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  familia Familia     @relation(fields: [idFamilia], references: [idFamilia])
+  itens   CestaItem[]
+  doacoes Doacao[]
+  entrega Entrega?
+
+  @@map("cesta")
+}
+
+model Item {
+  idItem     Int     @id @default(autoincrement()) @map("id_item")
+  nome       String  @db.VarChar(80)
+  categoria  String  @db.VarChar(50)
+  valorMedio Decimal @map("valor_medio") @db.Decimal(10, 2)
+
+  cestas   CestaItem[]
+  doacoes  DoacaoItem[]
+  estoques EstoqueOng[]
+
+  @@map("item")
+}
+
+model CestaItem {
+  idCesta              Int @map("id_cesta")
+  idItem               Int @map("id_item")
+  quantidadeNecessaria Int @map("quantidade_necessaria")
+  quantidadeArrecadada Int @default(0) @map("quantidade_arrecadada")
+
+  cesta Cesta @relation(fields: [idCesta], references: [idCesta])
+  item  Item  @relation(fields: [idItem], references: [idItem])
+
+  @@id([idCesta, idItem])
+  @@map("cesta_item")
+}
+
+model Doacao {
+  idDoacao   Int      @id @default(autoincrement()) @map("id_doacao")
+  idDoador   Int      @map("id_doador")
+  idCesta    Int      @map("id_cesta")
+  tipo       String   @db.VarChar(20)
+  status     String   @default("PENDENTE") @db.VarChar(20)
+  valorTotal Decimal  @map("valor_total") @db.Decimal(10, 2)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  doador     Usuario      @relation(fields: [idDoador], references: [idUsuario])
+  cesta      Cesta        @relation(fields: [idCesta], references: [idCesta])
+  itens      DoacaoItem[]
+  pagamentos Pagamento[]
+
+  @@map("doacao")
+}
+
+model DoacaoItem {
+  idDoacaoItem Int @id @default(autoincrement()) @map("id_doacao_item")
+  idDoacao     Int @map("id_doacao")
+  idItem       Int @map("id_item")
+  quantidade   Int
+
+  doacao Doacao @relation(fields: [idDoacao], references: [idDoacao])
+  item   Item   @relation(fields: [idItem], references: [idItem])
+
+  @@map("doacao_item")
+}
+
+model Pagamento {
+  idPagamento   Int     @id @default(autoincrement()) @map("id_pagamento")
+  idDoacao      Int     @map("id_doacao")
+  gateway       String  @db.VarChar(40)
+  transactionId String? @unique @map("transaction_id") @db.VarChar(120)
+  status        String  @default("PENDENTE") @db.VarChar(20)
+  valor         Decimal @db.Decimal(10, 2)
+
+  doacao Doacao @relation(fields: [idDoacao], references: [idDoacao])
+
+  @@map("pagamento")
+}
+
+model EstoqueOng {
+  idOng                Int @map("id_ong")
+  idItem               Int @map("id_item")
+  quantidadeDisponivel Int @default(0) @map("quantidade_disponivel")
+  quantidadeReservada  Int @default(0) @map("quantidade_reservada")
+
+  ong  Ong  @relation(fields: [idOng], references: [idOng])
+  item Item @relation(fields: [idItem], references: [idItem])
+
+  @@id([idOng, idItem])
+  @@map("estoque_ong")
+}
+
+model Entrega {
+  idEntrega      Int      @id @default(autoincrement()) @map("id_entrega")
+  idOng          Int      @map("id_ong")
+  idCesta        Int      @unique @map("id_cesta")
+  status         String   @default("PENDENTE") @db.VarChar(20)
+  dataAgendada   DateTime @map("data_agendada") @db.Timestamp(6)
+  rotaReferencia String?  @map("rota_referencia") @db.Text
+
+  ong   Ong   @relation(fields: [idOng], references: [idOng])
+  cesta Cesta @relation(fields: [idCesta], references: [idCesta])
+
+  @@map("entrega")
+}
+
+model Notificacao {
+  idNotificacao Int     @id @default(autoincrement()) @map("id_notificacao")
+  idUsuario     Int     @map("id_usuario")
+  tipo          String  @db.VarChar(40)
+  mensagem      String  @db.Text
+  lida          Boolean @default(false)
+
+  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario])
+
+  @@map("notificacao")
+}

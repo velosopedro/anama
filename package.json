@@ -1,0 +1,15 @@
+{
+  "name": "anama",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ecossistema digital ANAMÃ para intermediação de doações fracionadas de cestas básicas.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=@anama/api",
+    "dev:web": "npm run dev --workspace=@anama/web",
+    "dev:mobile": "npm run start --workspace=@anama/mobile"
+  }
+}
