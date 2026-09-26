@@ -1,24 +1,34 @@
-import "dotenv/config";
+import { app } from "./app.js";
+import { env } from "./config/env.js";
+import { prisma } from "./database/prisma.js";
 
-import cors from "cors";
-import express from "express";
-import helmet from "helmet";
+async function bootstrap() {
+  try {
+    await prisma.$connect();
 
-const app = express();
+    const server = app.listen(env.PORT, () => {
+      console.log(`ANAMÃ API executando em http://localhost:${env.PORT}`);
+    });
 
-const PORT = Number(process.env.PORT) || 3333;
+    const shutdown = async () => {
+      console.log("Encerrando ANAMÃ API...");
 
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
+      server.close(async () => {
+        await prisma.$disconnect();
 
-app.get("/health", (_request, response) => {
-  return response.status(200).json({
-    status: "ok",
-    application: "ANAMÃ API",
-  });
-});
+        process.exit(0);
+      });
+    };
 
-app.listen(PORT, () => {
-  console.log(`ANAMÃ API executando na porta ${PORT}`);
-});
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
+  } catch (error) {
+    console.error("Não foi possível iniciar a ANAMÃ API.", error);
+
+    await prisma.$disconnect();
+
+    process.exit(1);
+  }
+}
+
+void bootstrap();
