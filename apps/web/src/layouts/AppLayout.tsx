@@ -28,6 +28,8 @@ export function AppLayout() {
       <nav className="bottom-navigation">
         <Link to="/">Início</Link>
 
+        {user?.tipo === "ADMIN" && <Link to="/admin/organizations">ONGs</Link>}
+
         <Link to="/profile">Perfil</Link>
       </nav>
     </div>

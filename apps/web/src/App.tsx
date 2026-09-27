@@ -9,6 +9,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { BasketDetailsPage } from "./pages/BasketDetailsPage";
 import { RequestAidPage } from "./pages/RequestAidPage";
+import { AdminOrganizationsPage } from "./pages/AdminOrganizationsPage";
 
 export default function App() {
   return (
@@ -22,6 +23,11 @@ export default function App() {
           <Route path="baskets/:id" element={<BasketDetailsPage />} />
 
           <Route path="request-aid" element={<RequestAidPage />} />
+
+          <Route
+            path="admin/organizations"
+            element={<AdminOrganizationsPage />}
+          />
 
           <Route path="profile" element={<Navigate to="/" replace />} />
         </Route>
