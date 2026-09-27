@@ -7,6 +7,8 @@ import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { BasketDetailsPage } from "./pages/BasketDetailsPage";
+import { RequestAidPage } from "./pages/RequestAidPage";
 
 export default function App() {
   return (
@@ -16,6 +18,10 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<HomePage />} />
+
+          <Route path="baskets/:id" element={<BasketDetailsPage />} />
+
+          <Route path="request-aid" element={<RequestAidPage />} />
 
           <Route path="profile" element={<Navigate to="/" replace />} />
         </Route>

@@ -57,17 +57,23 @@ export const basketService = {
   async listCatalog() {
     const items = await basketRepository.findCatalogItems();
 
-    const baseNames = new Set(BASE_BASKET_COMPOSITION.map((item) => item.nome));
+    return items.map((item) => {
+      const baseConfig = BASE_BASKET_COMPOSITION.find(
+        (baseItem) => baseItem.nome === item.nome,
+      );
 
-    return items.map((item) => ({
-      idItem: item.idItem,
-      nome: item.nome,
-      categoria: item.categoria,
+      return {
+        idItem: item.idItem,
+        nome: item.nome,
+        categoria: item.categoria,
 
-      valorMedio: Number(item.valorMedio),
+        valorMedio: Number(item.valorMedio),
 
-      basico: baseNames.has(item.nome),
-    }));
+        basico: Boolean(baseConfig),
+
+        quantidadePadrao: baseConfig?.quantidade ?? 0,
+      };
+    });
   },
 
   async createAidRequest(idUsuario: number, input: AidRequestInput) {
